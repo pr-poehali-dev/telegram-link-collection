@@ -128,7 +128,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Icon name="Send" size={32} className="text-primary" />
-              <h1 className="text-2xl font-bold">Мои Telegram каналы</h1>
+              <h1 className="text-2xl font-bold">Переходник Давление</h1>
             </div>
             <div className="flex gap-3">
               <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
