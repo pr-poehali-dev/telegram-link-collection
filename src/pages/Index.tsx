@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import funcUrls from '../../backend/func2url.json';
 
 interface TelegramChannel {
   id: string;
@@ -37,6 +38,7 @@ const Index = () => {
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(0);
   const [isThemeDialogOpen, setIsThemeDialogOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [channels, setChannels] = useState<TelegramChannel[]>([
     {
@@ -127,6 +129,44 @@ const Index = () => {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+  };
+
+  const handleImageUpload = async (file: File, isEdit: boolean = false) => {
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result?.toString().split(',')[1];
+        
+        const response = await fetch(funcUrls['upload-image'], {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image: base64,
+            contentType: file.type
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.url) {
+          if (isEdit && editingChannel) {
+            setEditingChannel({ ...editingChannel, image: data.url });
+          } else {
+            setNewChannel({ ...newChannel, image: data.url });
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleAddChannel = () => {
@@ -289,12 +329,33 @@ const Index = () => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="image">Ссылка на изображение</Label>
+                          <Label htmlFor="image">Изображение</Label>
+                          {newChannel.image && (
+                            <img src={newChannel.image} alt="Preview" className="w-full h-32 object-cover rounded-md mb-2" />
+                          )}
+                          <div className="flex gap-2">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                              disabled={isUploading}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={isUploading}
+                              onClick={() => setNewChannel({ ...newChannel, image: '' })}
+                            >
+                              Очистить
+                            </Button>
+                          </div>
                           <Input
                             id="image"
                             value={newChannel.image}
                             onChange={(e) => setNewChannel({ ...newChannel, image: e.target.value })}
-                            placeholder="https://..."
+                            placeholder="или вставьте URL изображения"
+                            className="mt-2"
                           />
                         </div>
                         <div className="space-y-2">
@@ -315,8 +376,8 @@ const Index = () => {
                         <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                           Отмена
                         </Button>
-                        <Button onClick={handleAddChannel}>
-                          Добавить
+                        <Button onClick={handleAddChannel} disabled={isUploading}>
+                          {isUploading ? 'Загрузка...' : 'Добавить'}
                         </Button>
                       </div>
                     </DialogContent>
@@ -434,12 +495,33 @@ const Index = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-image">Ссылка на изображение</Label>
+                <Label htmlFor="edit-image">Изображение</Label>
+                {editingChannel.image && (
+                  <img src={editingChannel.image} alt="Preview" className="w-full h-32 object-cover rounded-md mb-2" />
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], true)}
+                    disabled={isUploading}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isUploading}
+                    onClick={() => editingChannel && setEditingChannel({ ...editingChannel, image: '' })}
+                  >
+                    Очистить
+                  </Button>
+                </div>
                 <Input
                   id="edit-image"
                   value={editingChannel.image}
                   onChange={(e) => setEditingChannel({ ...editingChannel, image: e.target.value })}
-                  placeholder="https://..."
+                  placeholder="или вставьте URL изображения"
+                  className="mt-2"
                 />
               </div>
               <div className="space-y-2">
@@ -461,8 +543,8 @@ const Index = () => {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Отмена
             </Button>
-            <Button onClick={handleSaveEdit}>
-              Сохранить
+            <Button onClick={handleSaveEdit} disabled={isUploading}>
+              {isUploading ? 'Загрузка...' : 'Сохранить'}
             </Button>
           </div>
         </DialogContent>

@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "Test image upload with valid base64",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "contentType": "image/png"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "url": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test upload without image",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
