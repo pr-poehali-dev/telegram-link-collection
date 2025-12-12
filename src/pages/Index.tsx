@@ -30,7 +30,7 @@ const Index = () => {
       description: 'Ежедневные обзоры рынков и новости бизнеса',
       link: 'https://t.me/example',
       image: 'https://via.placeholder.com/400x300/0EA5E9/FFFFFF?text=Business',
-      category: 'business'
+      category: 'main'
     },
     {
       id: '2',
@@ -38,16 +38,14 @@ const Index = () => {
       description: 'Глубокий анализ финансовых рынков',
       link: 'https://t.me/example2',
       image: 'https://via.placeholder.com/400x300/1A1F2C/FFFFFF?text=Finance',
-      category: 'finance'
+      category: 'kenty'
     }
   ]);
 
   const [categories] = useState<Category[]>([
     { id: 'all', name: 'Все каналы', color: '#0EA5E9' },
-    { id: 'business', name: 'Бизнес', color: '#0EA5E9' },
-    { id: 'finance', name: 'Финансы', color: '#1A1F2C' },
-    { id: 'tech', name: 'Технологии', color: '#0EA5E9' },
-    { id: 'marketing', name: 'Маркетинг', color: '#1A1F2C' }
+    { id: 'main', name: 'Основной', color: '#0EA5E9' },
+    { id: 'kenty', name: 'Кенты', color: '#1A1F2C' }
   ]);
 
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -59,7 +57,7 @@ const Index = () => {
     description: '',
     link: '',
     image: '',
-    category: 'business'
+    category: 'main'
   });
 
   const filteredChannels = selectedCategory === 'all' 
