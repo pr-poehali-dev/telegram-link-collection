@@ -42,7 +42,7 @@ const Index = () => {
     }
   ]);
 
-  const [categories] = useState<Category[]>([
+  const [categories, setCategories] = useState<Category[]>([
     { id: 'all', name: 'Все каналы', color: '#0EA5E9' },
     { id: 'main', name: 'Основной', color: '#0EA5E9' },
     { id: 'kenty', name: 'Кенты', color: '#1A1F2C' }
@@ -51,7 +51,9 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingChannel, setEditingChannel] = useState<TelegramChannel | null>(null);
+  const [newCategory, setNewCategory] = useState({ name: '', color: '#0EA5E9' });
   const [newChannel, setNewChannel] = useState({
     name: '',
     description: '',
@@ -71,7 +73,7 @@ const Index = () => {
         ...newChannel,
         image: newChannel.image || 'https://via.placeholder.com/400x300/0EA5E9/FFFFFF?text=Channel'
       }]);
-      setNewChannel({ name: '', description: '', link: '', image: '', category: 'business' });
+      setNewChannel({ name: '', description: '', link: '', image: '', category: 'main' });
       setIsAddDialogOpen(false);
     }
   };
@@ -95,6 +97,30 @@ const Index = () => {
     }
   };
 
+  const handleAddCategory = () => {
+    if (newCategory.name.trim()) {
+      const categoryId = newCategory.name.toLowerCase().replace(/\s+/g, '-');
+      setCategories([...categories, {
+        id: categoryId,
+        name: newCategory.name,
+        color: newCategory.color
+      }]);
+      setNewCategory({ name: '', color: '#0EA5E9' });
+      setIsCategoryDialogOpen(false);
+    }
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    if (categoryId === 'all' || categoryId === 'main' || categoryId === 'kenty') return;
+    setCategories(categories.filter(c => c.id !== categoryId));
+    setChannels(channels.map(ch => 
+      ch.category === categoryId ? { ...ch, category: 'main' } : ch
+    ));
+    if (selectedCategory === categoryId) {
+      setSelectedCategory('all');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-secondary text-secondary-foreground shadow-sm">
@@ -104,78 +130,129 @@ const Index = () => {
               <Icon name="Send" size={32} className="text-primary" />
               <h1 className="text-2xl font-bold">Мои Telegram каналы</h1>
             </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Icon name="Plus" size={18} />
-                  Добавить канал
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Добавить новый канал</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Название канала</Label>
-                    <Input
-                      id="name"
-                      value={newChannel.name}
-                      onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
-                      placeholder="Введите название"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Описание</Label>
-                    <Input
-                      id="description"
-                      value={newChannel.description}
-                      onChange={(e) => setNewChannel({ ...newChannel, description: e.target.value })}
-                      placeholder="Краткое описание канала"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="link">Ссылка на канал</Label>
-                    <Input
-                      id="link"
-                      value={newChannel.link}
-                      onChange={(e) => setNewChannel({ ...newChannel, link: e.target.value })}
-                      placeholder="https://t.me/..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Ссылка на изображение</Label>
-                    <Input
-                      id="image"
-                      value={newChannel.image}
-                      onChange={(e) => setNewChannel({ ...newChannel, image: e.target.value })}
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Категория</Label>
-                    <select
-                      id="category"
-                      value={newChannel.category}
-                      onChange={(e) => setNewChannel({ ...newChannel, category: e.target.value })}
-                      className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                    >
-                      {categories.filter(c => c.id !== 'all').map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    Отмена
+            <div className="flex gap-3">
+              <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Icon name="FolderPlus" size={18} />
+                    Создать категорию
                   </Button>
-                  <Button onClick={handleAddChannel}>
-                    Добавить
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[400px]">
+                  <DialogHeader>
+                    <DialogTitle>Создать категорию</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category-name">Название категории</Label>
+                      <Input
+                        id="category-name"
+                        value={newCategory.name}
+                        onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                        placeholder="Например: Работа"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="category-color">Цвет</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="category-color"
+                          type="color"
+                          value={newCategory.color}
+                          onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                          className="w-20 h-10"
+                        />
+                        <Input
+                          value={newCategory.color}
+                          onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                          placeholder="#0EA5E9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
+                      Отмена
+                    </Button>
+                    <Button onClick={handleAddCategory}>
+                      Создать
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Icon name="Plus" size={18} />
+                    Добавить канал
                   </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Добавить новый канал</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Название канала</Label>
+                      <Input
+                        id="name"
+                        value={newChannel.name}
+                        onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
+                        placeholder="Введите название"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Описание</Label>
+                      <Input
+                        id="description"
+                        value={newChannel.description}
+                        onChange={(e) => setNewChannel({ ...newChannel, description: e.target.value })}
+                        placeholder="Краткое описание канала"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="link">Ссылка на канал</Label>
+                      <Input
+                        id="link"
+                        value={newChannel.link}
+                        onChange={(e) => setNewChannel({ ...newChannel, link: e.target.value })}
+                        placeholder="https://t.me/..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="image">Ссылка на изображение</Label>
+                      <Input
+                        id="image"
+                        value={newChannel.image}
+                        onChange={(e) => setNewChannel({ ...newChannel, image: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Категория</Label>
+                      <select
+                        id="category"
+                        value={newChannel.category}
+                        onChange={(e) => setNewChannel({ ...newChannel, category: e.target.value })}
+                        className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                      >
+                        {categories.filter(c => c.id !== 'all').map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                      Отмена
+                    </Button>
+                    <Button onClick={handleAddChannel}>
+                      Добавить
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </header>
@@ -254,14 +331,29 @@ const Index = () => {
           <h2 className="text-lg font-medium mb-4 text-muted-foreground">Категории</h2>
           <div className="flex flex-wrap gap-2">
             {categories.map(category => (
-              <Badge
-                key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
-                className="cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105"
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                {category.name}
-              </Badge>
+              <div key={category.id} className="relative group">
+                <Badge
+                  variant={selectedCategory === category.id ? "default" : "outline"}
+                  className="cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105"
+                  onClick={() => setSelectedCategory(category.id)}
+                  style={selectedCategory === category.id ? { backgroundColor: category.color, borderColor: category.color } : {}}
+                >
+                  {category.name}
+                </Badge>
+                {category.id !== 'all' && category.id !== 'main' && category.id !== 'kenty' && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCategory(category.id);
+                    }}
+                  >
+                    <Icon name="X" size={12} />
+                  </Button>
+                )}
+              </div>
             ))}
           </div>
         </div>
