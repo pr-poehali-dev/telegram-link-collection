@@ -23,11 +23,12 @@ interface Category {
 }
 
 const COLOR_THEMES = [
-  { name: 'Синий', primary: '#0EA5E9', secondary: '#1A1F2C' },
-  { name: 'Зелёный', primary: '#10B981', secondary: '#065F46' },
-  { name: 'Фиолетовый', primary: '#8B5CF6', secondary: '#5B21B6' },
-  { name: 'Оранжевый', primary: '#F97316', secondary: '#C2410C' },
-  { name: 'Розовый', primary: '#EC4899', secondary: '#BE185D' },
+  { name: 'Синий', primary: '#0EA5E9', secondary: '#1A1F2C', background: '#FFFFFF' },
+  { name: 'Зелёный', primary: '#10B981', secondary: '#065F46', background: '#F0FDF4' },
+  { name: 'Фиолетовый', primary: '#8B5CF6', secondary: '#5B21B6', background: '#FAF5FF' },
+  { name: 'Оранжевый', primary: '#F97316', secondary: '#C2410C', background: '#FFF7ED' },
+  { name: 'Розовый', primary: '#EC4899', secondary: '#BE185D', background: '#FDF2F8' },
+  { name: 'Тёмный', primary: '#60A5FA', secondary: '#1E293B', background: '#0F172A' },
 ];
 
 const Index = () => {
@@ -79,8 +80,37 @@ const Index = () => {
   useEffect(() => {
     const root = document.documentElement;
     const theme = COLOR_THEMES[selectedTheme];
-    root.style.setProperty('--primary', `${parseInt(theme.primary.slice(1, 3), 16)} ${parseInt(theme.primary.slice(3, 5), 16)}% ${parseInt(theme.primary.slice(5, 7), 16)}%`);
-    root.style.setProperty('--secondary', `${parseInt(theme.secondary.slice(1, 3), 16)} ${parseInt(theme.secondary.slice(3, 5), 16)}% ${parseInt(theme.secondary.slice(5, 7), 16)}%`);
+    
+    const hexToHSL = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+      
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+        }
+      }
+      
+      return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+    };
+    
+    root.style.setProperty('--primary', hexToHSL(theme.primary));
+    root.style.setProperty('--secondary', hexToHSL(theme.secondary));
+    root.style.setProperty('--background', hexToHSL(theme.background));
+    root.style.setProperty('--foreground', theme.background === '#0F172A' ? '210 40% 98%' : '222 47% 11%');
+    root.style.setProperty('--card', hexToHSL(theme.background));
+    root.style.setProperty('--card-foreground', theme.background === '#0F172A' ? '210 40% 98%' : '222 47% 11%');
+    root.style.setProperty('--muted-foreground', theme.background === '#0F172A' ? '215 20% 65%' : '215 16% 47%');
   }, [selectedTheme]);
 
   const filteredChannels = selectedCategory === 'all' 
