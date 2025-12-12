@@ -52,6 +52,8 @@ const Index = () => {
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingChannel, setEditingChannel] = useState<TelegramChannel | null>(null);
   const [newChannel, setNewChannel] = useState({
     name: '',
     description: '',
@@ -78,6 +80,21 @@ const Index = () => {
 
   const handleDeleteChannel = (id: string) => {
     setChannels(channels.filter(ch => ch.id !== id));
+  };
+
+  const handleEditChannel = (channel: TelegramChannel) => {
+    setEditingChannel(channel);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingChannel) {
+      setChannels(channels.map(ch => 
+        ch.id === editingChannel.id ? editingChannel : ch
+      ));
+      setIsEditDialogOpen(false);
+      setEditingChannel(null);
+    }
   };
 
   return (
@@ -165,6 +182,75 @@ const Index = () => {
         </div>
       </header>
 
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Редактировать канал</DialogTitle>
+          </DialogHeader>
+          {editingChannel && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Название канала</Label>
+                <Input
+                  id="edit-name"
+                  value={editingChannel.name}
+                  onChange={(e) => setEditingChannel({ ...editingChannel, name: e.target.value })}
+                  placeholder="Введите название"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Описание</Label>
+                <Input
+                  id="edit-description"
+                  value={editingChannel.description}
+                  onChange={(e) => setEditingChannel({ ...editingChannel, description: e.target.value })}
+                  placeholder="Краткое описание канала"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-link">Ссылка на канал</Label>
+                <Input
+                  id="edit-link"
+                  value={editingChannel.link}
+                  onChange={(e) => setEditingChannel({ ...editingChannel, link: e.target.value })}
+                  placeholder="https://t.me/..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-image">Ссылка на изображение</Label>
+                <Input
+                  id="edit-image"
+                  value={editingChannel.image}
+                  onChange={(e) => setEditingChannel({ ...editingChannel, image: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Категория</Label>
+                <select
+                  id="edit-category"
+                  value={editingChannel.category}
+                  onChange={(e) => setEditingChannel({ ...editingChannel, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                >
+                  {categories.filter(c => c.id !== 'all').map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              Сохранить
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-lg font-medium mb-4 text-muted-foreground">Категории</h2>
@@ -191,14 +277,24 @@ const Index = () => {
                   alt={channel.name}
                   className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
                 />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 h-8 w-8"
-                  onClick={() => handleDeleteChannel(channel.id)}
-                >
-                  <Icon name="Trash2" size={16} />
-                </Button>
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleEditChannel(channel)}
+                  >
+                    <Icon name="Pencil" size={16} />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleDeleteChannel(channel.id)}
+                  >
+                    <Icon name="Trash2" size={16} />
+                  </Button>
+                </div>
               </div>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-2">
