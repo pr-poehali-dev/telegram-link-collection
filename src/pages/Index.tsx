@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,21 @@ interface Category {
   color: string;
 }
 
+const COLOR_THEMES = [
+  { name: 'Синий', primary: '#0EA5E9', secondary: '#1A1F2C' },
+  { name: 'Зелёный', primary: '#10B981', secondary: '#065F46' },
+  { name: 'Фиолетовый', primary: '#8B5CF6', secondary: '#5B21B6' },
+  { name: 'Оранжевый', primary: '#F97316', secondary: '#C2410C' },
+  { name: 'Розовый', primary: '#EC4899', secondary: '#BE185D' },
+];
+
 const Index = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(0);
+  const [isThemeDialogOpen, setIsThemeDialogOpen] = useState(false);
+
   const [channels, setChannels] = useState<TelegramChannel[]>([
     {
       id: '1',
@@ -62,9 +76,28 @@ const Index = () => {
     category: 'main'
   });
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const theme = COLOR_THEMES[selectedTheme];
+    root.style.setProperty('--primary', `${parseInt(theme.primary.slice(1, 3), 16)} ${parseInt(theme.primary.slice(3, 5), 16)}% ${parseInt(theme.primary.slice(5, 7), 16)}%`);
+    root.style.setProperty('--secondary', `${parseInt(theme.secondary.slice(1, 3), 16)} ${parseInt(theme.secondary.slice(3, 5), 16)}% ${parseInt(theme.secondary.slice(5, 7), 16)}%`);
+  }, [selectedTheme]);
+
   const filteredChannels = selectedCategory === 'all' 
     ? channels 
     : channels.filter(ch => ch.category === selectedCategory);
+
+  const handleLogin = () => {
+    if (password === 'admin') {
+      setIsAuthenticated(true);
+      setIsLoginDialogOpen(false);
+      setPassword('');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
 
   const handleAddChannel = () => {
     if (newChannel.name && newChannel.link) {
@@ -131,131 +164,210 @@ const Index = () => {
               <h1 className="text-2xl font-bold">Переходник Давление</h1>
             </div>
             <div className="flex gap-3">
-              <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <Icon name="FolderPlus" size={18} />
-                    Создать категорию
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[400px]">
-                  <DialogHeader>
-                    <DialogTitle>Создать категорию</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category-name">Название категории</Label>
-                      <Input
-                        id="category-name"
-                        value={newCategory.name}
-                        onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                        placeholder="Например: Работа"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="category-color">Цвет</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="category-color"
-                          type="color"
-                          value={newCategory.color}
-                          onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
-                          className="w-20 h-10"
-                        />
-                        <Input
-                          value={newCategory.color}
-                          onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
-                          placeholder="#0EA5E9"
-                        />
+              <Button variant="outline" className="gap-2" onClick={() => setIsThemeDialogOpen(true)}>
+                <Icon name="Palette" size={18} />
+                Цвет
+              </Button>
+              {isAuthenticated ? (
+                <>
+                  <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <Icon name="FolderPlus" size={18} />
+                        Создать категорию
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[400px]">
+                      <DialogHeader>
+                        <DialogTitle>Создать категорию</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="category-name">Название категории</Label>
+                          <Input
+                            id="category-name"
+                            value={newCategory.name}
+                            onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                            placeholder="Например: Работа"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="category-color">Цвет</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="category-color"
+                              type="color"
+                              value={newCategory.color}
+                              onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                              className="w-20 h-10"
+                            />
+                            <Input
+                              value={newCategory.color}
+                              onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                              placeholder="#0EA5E9"
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
-                      Отмена
-                    </Button>
-                    <Button onClick={handleAddCategory}>
-                      Создать
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gap-2">
-                    <Icon name="Plus" size={18} />
-                    Добавить канал
+                      <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
+                          Отмена
+                        </Button>
+                        <Button onClick={handleAddCategory}>
+                          Создать
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2">
+                        <Icon name="Plus" size={18} />
+                        Добавить канал
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px]">
+                      <DialogHeader>
+                        <DialogTitle>Добавить новый канал</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Название канала</Label>
+                          <Input
+                            id="name"
+                            value={newChannel.name}
+                            onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
+                            placeholder="Введите название"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Описание</Label>
+                          <Input
+                            id="description"
+                            value={newChannel.description}
+                            onChange={(e) => setNewChannel({ ...newChannel, description: e.target.value })}
+                            placeholder="Краткое описание канала"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="link">Ссылка на канал</Label>
+                          <Input
+                            id="link"
+                            value={newChannel.link}
+                            onChange={(e) => setNewChannel({ ...newChannel, link: e.target.value })}
+                            placeholder="https://t.me/..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="image">Ссылка на изображение</Label>
+                          <Input
+                            id="image"
+                            value={newChannel.image}
+                            onChange={(e) => setNewChannel({ ...newChannel, image: e.target.value })}
+                            placeholder="https://..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="category">Категория</Label>
+                          <select
+                            id="category"
+                            value={newChannel.category}
+                            onChange={(e) => setNewChannel({ ...newChannel, category: e.target.value })}
+                            className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                          >
+                            {categories.filter(c => c.id !== 'all').map(cat => (
+                              <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                          Отмена
+                        </Button>
+                        <Button onClick={handleAddChannel}>
+                          Добавить
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button variant="outline" onClick={handleLogout}>
+                    <Icon name="LogOut" size={18} />
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>Добавить новый канал</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Название канала</Label>
-                      <Input
-                        id="name"
-                        value={newChannel.name}
-                        onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
-                        placeholder="Введите название"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Описание</Label>
-                      <Input
-                        id="description"
-                        value={newChannel.description}
-                        onChange={(e) => setNewChannel({ ...newChannel, description: e.target.value })}
-                        placeholder="Краткое описание канала"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="link">Ссылка на канал</Label>
-                      <Input
-                        id="link"
-                        value={newChannel.link}
-                        onChange={(e) => setNewChannel({ ...newChannel, link: e.target.value })}
-                        placeholder="https://t.me/..."
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="image">Ссылка на изображение</Label>
-                      <Input
-                        id="image"
-                        value={newChannel.image}
-                        onChange={(e) => setNewChannel({ ...newChannel, image: e.target.value })}
-                        placeholder="https://..."
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Категория</Label>
-                      <select
-                        id="category"
-                        value={newChannel.category}
-                        onChange={(e) => setNewChannel({ ...newChannel, category: e.target.value })}
-                        className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                      >
-                        {categories.filter(c => c.id !== 'all').map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                      Отмена
-                    </Button>
-                    <Button onClick={handleAddChannel}>
-                      Добавить
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                </>
+              ) : (
+                <Button onClick={() => setIsLoginDialogOpen(true)} className="gap-2">
+                  <Icon name="Lock" size={18} />
+                  Войти
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </header>
+
+      <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Вход для администратора</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Пароль</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                placeholder="Введите пароль"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsLoginDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleLogin}>
+              Войти
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isThemeDialogOpen} onOpenChange={setIsThemeDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Выбор цветовой схемы</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {COLOR_THEMES.map((theme, index) => (
+              <div
+                key={index}
+                className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-all hover:scale-105 ${
+                  selectedTheme === index ? 'border-primary' : 'border-border'
+                }`}
+                onClick={() => {
+                  setSelectedTheme(index);
+                  setIsThemeDialogOpen(false);
+                }}
+              >
+                <span className="font-medium">{theme.name}</span>
+                <div className="flex gap-2">
+                  <div
+                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                    style={{ backgroundColor: theme.primary }}
+                  />
+                  <div
+                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                    style={{ backgroundColor: theme.secondary }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -340,7 +452,7 @@ const Index = () => {
                 >
                   {category.name}
                 </Badge>
-                {category.id !== 'all' && category.id !== 'main' && category.id !== 'kenty' && (
+                {isAuthenticated && category.id !== 'all' && category.id !== 'main' && category.id !== 'kenty' && (
                   <Button
                     variant="destructive"
                     size="icon"
@@ -367,24 +479,26 @@ const Index = () => {
                   alt={channel.name}
                   className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
                 />
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleEditChannel(channel)}
-                  >
-                    <Icon name="Pencil" size={16} />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleDeleteChannel(channel.id)}
-                  >
-                    <Icon name="Trash2" size={16} />
-                  </Button>
-                </div>
+                {isAuthenticated && (
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleEditChannel(channel)}
+                    >
+                      <Icon name="Pencil" size={16} />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleDeleteChannel(channel.id)}
+                    >
+                      <Icon name="Trash2" size={16} />
+                    </Button>
+                  </div>
+                )}
               </div>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-2">
